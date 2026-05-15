@@ -1475,56 +1475,6 @@
             </div>
         </section>
 
-        <!-- ============== LEADERBOARD ============== -->
-        <section id="leaderboard">
-            <h2 class="section-title"><span class="num">07</span>Leaderboard</h2>
-            <p class="section-sub">
-                Main results across three evaluation layers. <strong>Higher is better</strong> for
-                all metrics. Best in column highlighted.
-            </p>
-            <div class="table-wrap">
-                <table class="leaderboard">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">Model</th>
-                            <th class="group" colspan="4">L1 — Boundary Compliance</th>
-                            <th class="group" colspan="3">L2 — Execution Fidelity</th>
-                            <th class="group" colspan="4">L3 — System Stability</th>
-                            <th class="group" colspan="3">Trade-off (S@T)</th>
-                            <th rowspan="2">Overall</th>
-                        </tr>
-                        <tr>
-                            <th>SAR<sup>t</sup></th><th>SAR<sup>r</sup></th><th>SAR<sup>f</sup></th><th>Avg</th>
-                            <th>AVS</th><th>TCR</th><th>Avg</th>
-                            <th>Inj.</th><th>Amb.</th><th>Rob.</th><th>Avg</th>
-                            <th>S@20</th><th>S@40</th><th>S@60</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="group-row"><td colspan="16">OpenClaw</td></tr>
-                        <tr><td class="model">ChatGPT-5.4</td><td>0.61</td><td>0.43</td><td>0.51</td><td>0.52</td><td>0.49</td><td>0.51</td><td>0.50</td><td>0.18</td><td>0.35</td><td class="best">0.67</td><td>0.33</td><td>0.62</td><td>0.48</td><td>0.31</td><td>0.25</td></tr>
-                        <tr><td class="model">Claude Opus 4.6</td><td>0.38</td><td>0.16</td><td>0.35</td><td>0.30</td><td>0.51</td><td>0.69</td><td>0.60</td><td>0.17</td><td>0.22</td><td>0.30</td><td>0.23</td><td>0.53</td><td>0.41</td><td>0.34</td><td>0.18</td></tr>
-                        <tr><td class="model">Claude Sonnet 4.6</td><td>0.47</td><td>0.22</td><td>0.46</td><td>0.38</td><td>0.49</td><td>0.57</td><td>0.53</td><td>0.19</td><td>0.28</td><td>0.40</td><td>0.26</td><td>0.53</td><td>0.39</td><td>0.25</td><td>0.19</td></tr>
-                        <tr><td class="model">Gemini 3.1 Pro</td><td class="best">0.74</td><td class="best">0.57</td><td>0.66</td><td class="best">0.66</td><td class="best">0.53</td><td>0.50</td><td>0.52</td><td class="best">0.22</td><td class="best">0.38</td><td>0.65</td><td>0.34</td><td class="best">0.70</td><td>0.40</td><td>0.17</td><td class="best">0.32</td></tr>
-                        <tr><td class="model">GLM 5V Turbo</td><td>0.63</td><td>0.34</td><td>0.55</td><td>0.51</td><td>0.47</td><td>0.46</td><td>0.47</td><td>0.19</td><td>0.30</td><td>0.42</td><td>0.28</td><td>0.54</td><td>0.40</td><td>0.21</td><td>0.22</td></tr>
-                        <tr><td class="model">Kimi K2.6</td><td>0.73</td><td>0.51</td><td class="best">0.70</td><td>0.65</td><td>0.49</td><td>0.43</td><td>0.46</td><td>0.20</td><td>0.37</td><td>0.62</td><td class="best">0.36</td><td>0.57</td><td>0.29</td><td>0.13</td><td>0.28</td></tr>
-                        <tr><td class="model">Qwen 3.5 Plus</td><td>0.66</td><td>0.32</td><td>0.48</td><td>0.49</td><td>0.50</td><td>0.49</td><td>0.50</td><td>0.17</td><td>0.35</td><td>0.43</td><td>0.28</td><td>0.56</td><td>0.38</td><td>0.19</td><td>0.23</td></tr>
-
-                        <tr class="group-row group-claude"><td colspan="16">Claude Code</td></tr>
-                        <tr><td class="model">Claude Opus 4.6</td><td>0.47</td><td>0.20</td><td>0.45</td><td>0.37</td><td>0.51</td><td class="best">0.71</td><td class="best">0.61</td><td>0.20</td><td>0.26</td><td>0.38</td><td>0.26</td><td>0.58</td><td>0.53</td><td class="best">0.44</td><td>0.23</td></tr>
-                        <tr><td class="model">Claude Sonnet 4.6</td><td>0.65</td><td>0.31</td><td>0.46</td><td>0.47</td><td>0.51</td><td>0.66</td><td>0.59</td><td>0.22</td><td>0.33</td><td>0.47</td><td>0.30</td><td>0.65</td><td class="best">0.59</td><td class="best">0.44</td><td>0.27</td></tr>
-
-                        <tr class="group-row group-codex"><td colspan="16">Codex</td></tr>
-                        <tr><td class="model">ChatGPT-5.4</td><td>0.38</td><td>0.12</td><td>0.35</td><td>0.28</td><td>0.48</td><td>0.69</td><td>0.59</td><td>0.15</td><td>0.24</td><td>0.23</td><td>0.19</td><td>0.50</td><td>0.45</td><td>0.35</td><td>0.16</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="legend">
-                <span><i style="background:#2563eb"></i> Best in column</span>
-                <span>SAR = Safety Adherence Rate &middot; AVS = Action Validity &middot; TCR = Task Completion &middot; S@T = score retained at τ task completion</span>
-            </div>
-        </section>
-
         <!-- ============== KEY FINDINGS ============== -->
         <section id="findings">
             <h2 class="section-title"><span class="num">08</span>Key Findings</h2>
