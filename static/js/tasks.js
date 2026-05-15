@@ -5,7 +5,6 @@ const TASKS = DATA ? DATA.tasks : [];
 const TOOLS_BY_DOMAIN = DATA ? DATA.tools : {};
 
 const DOMAIN_ALIASES = {
-    all: "all",
     social: "social_interaction",
     daily: "daily_life",
     legal: "legal_compliance",
@@ -63,7 +62,7 @@ function taskBlob(task) {
     ].join(" ").toLowerCase();
 }
 
-let activeDomain = "all";
+let activeDomain = DOMAINS[0]?.id || "";
 let activeQuery = "";
 
 function renderMissingData() {
@@ -94,7 +93,7 @@ function renderHeroStats() {
 }
 
 function counts() {
-    const m = { all: TASKS.length };
+    const m = {};
     DOMAINS.forEach(d => { m[d.id] = TASKS.filter(t => t.domain === d.id).length; });
     return m;
 }
@@ -103,10 +102,7 @@ function renderChips() {
     const chipsEl = document.getElementById("domainChips");
     if (!chipsEl) return;
     const c = counts();
-    const all = `<button class="domain-chip ${activeDomain === "all" ? "active" : ""}" data-d="all">
-                    <span class="chip-emoji">✦</span> All <span class="chip-count">${c.all}</span>
-                 </button>`;
-    chipsEl.innerHTML = all + DOMAINS.map(d => `
+    chipsEl.innerHTML = DOMAINS.map(d => `
         <button class="domain-chip ${activeDomain === d.id ? "active" : ""}" data-d="${d.id}" style="${activeDomain === d.id ? `background:linear-gradient(135deg,${d.color},${d.color}cc);` : ""}">
             <span class="chip-emoji">${d.emoji}</span> ${escapeHtml(d.label)}
             <span class="chip-count">${c[d.id] || 0}</span>
@@ -119,8 +115,7 @@ function renderChips() {
             renderTasks();
             renderDomainPanel();
             const params = new URLSearchParams(window.location.search);
-            if (activeDomain === "all") params.delete("domain");
-            else params.set("domain", activeDomain);
+            params.set("domain", activeDomain);
             const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
             window.history.replaceState(null, "", next);
         });
@@ -131,22 +126,6 @@ function renderDomainPanel() {
     const panel = document.getElementById("domainPanel");
     if (!panel || !DATA) return;
     const stats = DATA.stats || {};
-    if (activeDomain === "all") {
-        panel.innerHTML = `
-            <div class="domain-panel-icon" style="background:linear-gradient(135deg,#2563eb,#7c3aed);">✦</div>
-            <div style="flex:1;min-width:0;">
-                <div class="domain-panel-label">All Multi-Agent Tasks</div>
-                <p class="domain-panel-blurb">Browse the generated HarnessAudit multi-agent task snapshot from <code>multi_agent/tasks</code> and <code>multi_agent/tools</code>.</p>
-                <div class="domain-panel-stats">
-                    <span><strong>${stats.task_count}</strong> tasks</span>
-                    <span><strong>${stats.tool_definition_count}</strong> tool definitions</span>
-                    <span><strong>${stats.resource_tool_definition_count}</strong> resource tools</span>
-                    <span><strong>${stats.multimodal_task_count}</strong> multimodal tasks</span>
-                </div>
-            </div>
-        `;
-        return;
-    }
     const d = domainOf(activeDomain);
     const dStats = (stats.by_domain || {})[activeDomain] || {};
     panel.innerHTML = `
@@ -159,7 +138,6 @@ function renderDomainPanel() {
                 <span><strong>${dStats.category_count || 0}</strong> categories</span>
                 <span><strong>${dStats.role_count || 0}</strong> roles</span>
                 <span><strong>${dStats.task_tool_count || 0}</strong> task tools</span>
-                <span><strong>${dStats.resource_tool_count || 0}</strong> resource tools</span>
             </div>
         </div>
     `;
@@ -168,7 +146,7 @@ function renderDomainPanel() {
 function filteredTasks() {
     const q = activeQuery.trim().toLowerCase();
     return TASKS.filter(t => {
-        if (activeDomain !== "all" && t.domain !== activeDomain) return false;
+        if (activeDomain && t.domain !== activeDomain) return false;
         return !q || taskBlob(t).includes(q);
     });
 }
@@ -203,23 +181,23 @@ function renderTasks() {
     });
 }
 
-function renderToolTags(names, resourceSet = new Set(), extraClass = "") {
+function renderToolTags(names, extraClass = "") {
     if (!names || names.length === 0) return `<span class="muted">—</span>`;
     return names.map(name => {
-        const cls = ["tool-tag", extraClass, resourceSet.has(name) ? "resource" : ""].filter(Boolean).join(" ");
-        return `<code class="${cls}">${escapeHtml(name)}${resourceSet.has(name) ? " · resource" : ""}</code>`;
+        const cls = ["tool-tag", extraClass].filter(Boolean).join(" ");
+        return `<code class="${cls}">${escapeHtml(name)}</code>`;
     }).join("");
 }
 
-function renderRoleCards(task, resourceSet) {
+function renderRoleCards(task) {
     return (task.agents || []).map(agent => `
         <div class="role-tool-card">
             <div class="role-tool-head">
                 <span>${escapeHtml(agent.role)}</span>
                 <small>${escapeHtml(agent.description || "")}</small>
             </div>
-            <div class="role-tool-row"><strong>Useful</strong><div>${renderToolTags(agent.useful_tools || [], resourceSet)}</div></div>
-            <div class="role-tool-row"><strong>Forbidden</strong><div>${renderToolTags(agent.forbidden_tools || [], resourceSet, "forbidden")}</div></div>
+            <div class="role-tool-row"><strong>Useful</strong><div>${renderToolTags(agent.useful_tools || [], "useful")}</div></div>
+            <div class="role-tool-row"><strong>Forbidden</strong><div>${renderToolTags(agent.forbidden_tools || [], "forbidden")}</div></div>
         </div>
     `).join("");
 }
@@ -232,25 +210,24 @@ function renderSummaryGrid(items) {
 
 function renderAccessSummary(summary) {
     const byType = summary.by_type || {};
-    const pieces = Object.keys(byType).sort().map(k => `${k}: ${byType[k]}`);
     const severity = summary.by_severity || {};
-    const severityText = Object.keys(severity).length
-        ? ` Severity tiers: ${Object.keys(severity).sort().map(k => `${k}: ${severity[k]}`).join(", ")}.`
-        : "";
-    return `${summary.total || 0} access rules. ${pieces.join(" · ") || "No typed access rules."}.${severityText}`;
+    const items = [["Access rules", summary.total || 0]];
+    Object.keys(byType).sort().forEach(k => items.push([k, byType[k]]));
+    Object.keys(severity).sort().forEach(k => items.push([`severity.${k}`, severity[k]]));
+    return `<ul class="modal-list compact-list">${items.map(([label, value]) => `
+        <li><strong>${escapeHtml(label)}</strong>: ${escapeHtml(value)}</li>
+    `).join("")}</ul>`;
 }
 
 function renderCompletionSummary(summary) {
     const byType = summary.by_type || {};
     const ruleTypes = summary.rule_types || {};
-    const typeText = Object.keys(byType).sort().map(k => `${k}: ${byType[k]}`).join(" · ");
-    const ruleText = Object.keys(ruleTypes).sort().map(k => `${k}: ${ruleTypes[k]}`).join(" · ");
-    const names = (summary.names || []).slice(0, 12).join(", ");
-    return `
-        <p>${summary.total || 0} completion checkpoints. ${escapeHtml(typeText || "No checkpoint type breakdown.")}</p>
-        ${ruleText ? `<p class="modal-note">Rule checkpoint types: ${escapeHtml(ruleText)}</p>` : ""}
-        ${names ? `<p class="modal-note">Checkpoint names: ${escapeHtml(names)}${(summary.names || []).length > 12 ? "…" : ""}</p>` : ""}
-    `;
+    const items = [["Completion checkpoints", summary.total || 0]];
+    Object.keys(byType).sort().forEach(k => items.push([k, byType[k]]));
+    Object.keys(ruleTypes).sort().forEach(k => items.push([`rule.${k}`, ruleTypes[k]]));
+    return `<ul class="modal-list compact-list">${items.map(([label, value]) => `
+        <li><strong>${escapeHtml(label)}</strong>: ${escapeHtml(value)}</li>
+    `).join("")}</ul>`;
 }
 
 function renderMetadata(metadata) {
@@ -267,7 +244,6 @@ function openTaskModal(id) {
     const domain = domainOf(task.domain);
     const modal = document.getElementById("taskModal");
     const body = document.getElementById("modalBody");
-    const resourceSet = new Set(task.resource_tools || []);
     document.getElementById("modalId").textContent = `${task.id} · ${domain.label} · ${task.category}`;
     document.getElementById("modalTitle").textContent = task.title;
     document.getElementById("modalMeta").innerHTML = `
@@ -287,20 +263,19 @@ function openTaskModal(id) {
             ["Category", prettyLabel(task.category)],
             ["Source", task.source_path],
             ["Input Assets", (task.input_assets || []).length],
-            ["Resource Tools", (task.resource_tools || []).length],
             ["Access Rules", (task.access_summary || {}).total || 0],
         ])}
         <div class="field">
             <h4>Roles & Tool Scope</h4>
-            <div class="role-tool-grid">${renderRoleCards(task, resourceSet)}</div>
+            <div class="role-tool-grid">${renderRoleCards(task)}</div>
         </div>
         <div class="field">
             <h4>Task Tool Set</h4>
-            <div class="tool-list">${renderToolTags(task.tools || [], resourceSet)}</div>
+            <div class="tool-list">${renderToolTags(task.tools || [])}</div>
         </div>
         <div class="field">
             <h4>Boundary Rule Summary</h4>
-            <p>${escapeHtml(renderAccessSummary(task.access_summary || {}))}</p>
+            ${renderAccessSummary(task.access_summary || {})}
         </div>
         <div class="field">
             <h4>Completion Checks</h4>
@@ -337,7 +312,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     const requested = params.get("domain");
     const normalized = DOMAIN_ALIASES[requested] || requested;
-    if (normalized && (normalized === "all" || DOMAINS.some(d => d.id === normalized))) {
+    if (normalized && DOMAINS.some(d => d.id === normalized)) {
         activeDomain = normalized;
     }
     renderChips();
