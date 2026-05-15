@@ -31,6 +31,20 @@ website/
         └── logos/                   # Affiliation logos
 ```
 
+## Task Browser data
+
+The Task Browser is generated from the real multi-agent YAML specs in the
+main HarnessAudit repository. Regenerate the static snapshot after task/tool
+changes:
+
+```bash
+cd /home/cliu322/HarnessAudit.github.io
+python scripts/build_task_browser_data.py --source ../HarnessAudit --output static/js/task_data.js
+```
+
+The generated `static/js/task_data.js` is committed so GitHub Pages remains a
+fully static site with no runtime fetch dependency.
+
 ## Citation
 
 ```bibtex

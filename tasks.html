@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Browser — HarnessAudit</title>
-    <meta name="description" content="Browse representative HarnessAudit-Bench tasks across 8 real-world domains.">
+    <meta name="description" content="Browse the real HarnessAudit multi-agent tasks and tool catalogs across 8 domains.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -492,6 +492,111 @@
         }
         .modal-card .tool-list code { background: rgba(15,23,42,0.04); }
 
+        .modal-card { max-width: 900px; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+            gap: 8px;
+            margin: 12px 0 16px;
+        }
+        .summary-item {
+            border: 1px solid var(--border);
+            background: var(--bg-soft);
+            border-radius: 10px;
+            padding: 9px 10px;
+        }
+        .summary-item span {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .summary-item strong {
+            display: block;
+            margin-top: 2px;
+            color: var(--text);
+            font-size: 0.86rem;
+            word-break: break-word;
+        }
+        .role-tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+            gap: 10px;
+        }
+        .role-tool-card {
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            background: #fff;
+        }
+        .role-tool-head span {
+            display: block;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .role-tool-head small {
+            display: block;
+            margin-top: 2px;
+            color: var(--text-muted);
+            line-height: 1.45;
+        }
+        .role-tool-row { margin-top: 10px; }
+        .role-tool-row strong {
+            display: block;
+            margin-bottom: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .tool-tag {
+            display: inline-block;
+            margin: 0 5px 5px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.74rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: rgba(15,23,42,0.04);
+            color: var(--text);
+        }
+        .tool-tag.resource {
+            background: rgba(13,148,136,0.10);
+            color: #0d9488;
+            border-color: rgba(13,148,136,0.22);
+        }
+        .tool-tag.forbidden {
+            background: rgba(239,68,68,0.08);
+            color: #b91c1c;
+            border-color: rgba(239,68,68,0.22);
+        }
+        .modal-note, .muted { color: var(--text-muted); font-size: 0.9rem; }
+        .modal-list { margin: 0; padding-left: 18px; color: var(--text); font-size: 0.92rem; }
+        .metadata-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 8px;
+        }
+        .metadata-list div {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 10px;
+            background: var(--bg-soft);
+        }
+        .metadata-list strong {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+        .metadata-list span { display: block; margin-top: 2px; font-size: 0.88rem; color: var(--text); }
+
+
         /* Footer */
         footer {
             padding: 28px 24px;
@@ -537,18 +642,14 @@
             <span class="grad">Task Browser</span>
         </h1>
         <p class="page-sub">
-            Explore HarnessAudit-Bench across <strong>8 real-world domains</strong> and
-            <strong>24 fine-grained scenarios</strong>. Pick a domain, search by role or tool,
-            and click any card to view the full task spec, audited roles &amp; tools, safety
-            constraints, and a representative perturbation.
+            Explore the real HarnessAudit multi-agent benchmark snapshot generated from
+            <code>multi_agent/tasks</code> and <code>multi_agent/tools</code>. Pick a domain,
+            search by role or tool, and click any card to inspect the task goal, role-level
+            useful/forbidden tools, resource boundaries, and completion checks.
         </p>
 
-        <div class="stats-strip">
-            <div class="stat-card"><div class="num">210</div><div class="label">Total Tasks</div></div>
-            <div class="stat-card"><div class="num">8</div><div class="label">Domains</div></div>
-            <div class="stat-card"><div class="num">24</div><div class="label">Scenarios</div></div>
-            <div class="stat-card"><div class="num">69</div><div class="label">Role Templates</div></div>
-            <div class="stat-card"><div class="num">525</div><div class="label">Perturbations</div></div>
+        <div class="stats-strip" id="statsStrip">
+            <div class="stat-card"><div class="num">—</div><div class="label">Loading</div></div>
         </div>
     </div>
 </div>
@@ -567,7 +668,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
                 <input id="taskSearch" type="search" placeholder="Search tasks, roles, tools…" autocomplete="off"/>
             </label>
-            <span class="task-count" id="taskCount">0 tasks</span>
+            <span class="task-count" id="taskCount">Loading tasks…</span>
         </div>
     </div>
 
@@ -583,26 +684,7 @@
         <h3 id="modalTitle"></h3>
         <div class="meta-row" id="modalMeta"></div>
 
-        <div class="field">
-            <h4>Goal</h4>
-            <p id="modalGoal"></p>
-        </div>
-        <div class="field">
-            <h4>Participating Roles</h4>
-            <div class="role-list" id="modalRoles"></div>
-        </div>
-        <div class="field">
-            <h4>Audited Tools</h4>
-            <div class="tool-list" id="modalTools"></div>
-        </div>
-        <div class="field">
-            <h4>Safety Constraints</h4>
-            <p id="modalConstraints"></p>
-        </div>
-        <div class="field">
-            <h4>Representative Perturbation</h4>
-            <p id="modalPerturb"></p>
-        </div>
+        <div id="modalBody"></div>
     </div>
 </div>
 
@@ -612,6 +694,7 @@
     &middot; &copy; 2026 HarnessAudit
 </footer>
 
+<script src="static/js/task_data.js"></script>
 <script src="static/js/tasks.js"></script>
 
 </body>
