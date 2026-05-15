@@ -6,12 +6,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+TASKS_PER_DOMAIN = 15
 
 DOMAIN_META: dict[str, dict[str, str]] = {
     "finance": {
@@ -160,6 +162,38 @@ def load_catalogs(source_root: Path) -> tuple[dict[str, Any], dict[str, dict[str
     return catalogs, tool_maps, tool_orders
 
 
+def _balanced_domain_sample(
+    task_records: list[dict[str, Any]],
+    *,
+    per_domain: int = TASKS_PER_DOMAIN,
+) -> list[dict[str, Any]]:
+    """Select a deterministic category-balanced display sample per domain."""
+
+    selected: list[dict[str, Any]] = []
+    for domain in DOMAIN_ORDER:
+        domain_tasks = [task for task in task_records if task["domain"] == domain]
+        buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        for task in sorted(domain_tasks, key=lambda item: _natural_key(item["id"])):
+            buckets[task["category"]].append(task)
+
+        domain_selected: list[dict[str, Any]] = []
+        categories = sorted(buckets, key=_natural_key)
+        while categories and len(domain_selected) < per_domain:
+            next_categories: list[str] = []
+            for category in categories:
+                if len(domain_selected) >= per_domain:
+                    break
+                bucket = buckets[category]
+                if bucket:
+                    domain_selected.append(bucket.pop(0))
+                if bucket:
+                    next_categories.append(category)
+            categories = next_categories
+
+        selected.extend(domain_selected)
+    return selected
+
+
 def build_data(source_root: Path) -> dict[str, Any]:
     tasks_dir = source_root / "multi_agent" / "tasks"
     tools_dir = source_root / "multi_agent" / "tools"
@@ -299,9 +333,11 @@ def build_data(source_root: Path) -> dict[str, Any]:
             }
         )
 
+    display_task_records = _balanced_domain_sample(task_records)
+
     by_domain: dict[str, dict[str, Any]] = {}
     for domain in DOMAIN_ORDER:
-        domain_tasks = [task for task in task_records if task["domain"] == domain]
+        domain_tasks = [task for task in display_task_records if task["domain"] == domain]
         domain_roles = {role for task in domain_tasks for role in task["roles"]}
         domain_tools = {tool for task in domain_tasks for tool in task["tools"]}
         by_domain[domain] = {
@@ -326,14 +362,16 @@ def build_data(source_root: Path) -> dict[str, Any]:
             "tools_dir": "multi_agent/tools",
         },
         "stats": {
-            "task_count": len(task_records),
+            "task_count": len(display_task_records),
+            "source_task_count": len(task_records),
+            "display_tasks_per_domain": TASKS_PER_DOMAIN,
             "domain_count": len(DOMAIN_ORDER),
             "category_count": len(category_pairs),
             "role_template_count": len(role_names),
             "tool_definition_count": total_tool_defs,
             "resource_tool_definition_count": total_resource_tool_defs,
             "task_tool_count": len(all_task_tool_pairs),
-            "multimodal_task_count": sum(1 for task in task_records if task["modality"] == "multimodal"),
+            "multimodal_task_count": sum(1 for task in display_task_records if task["modality"] == "multimodal"),
             "by_domain": by_domain,
         },
         "domains": [
@@ -341,7 +379,7 @@ def build_data(source_root: Path) -> dict[str, Any]:
             for domain in DOMAIN_ORDER
         ],
         "tools": {domain: catalogs[domain] for domain in DOMAIN_ORDER},
-        "tasks": task_records,
+        "tasks": display_task_records,
     }
 
 
