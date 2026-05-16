@@ -1424,7 +1424,7 @@
             <h2 class="section-title"><span class="num">06</span>Interactive Data</h2>
             <p class="section-sub">
                 Explore HarnessAudit-Bench results across 10 harness configurations. Toggle views
-                to compare safety layers, perturbation stability, and trade-off curves.
+                to compare safety layers and perturbation stability.
             </p>
 
             <div class="dashboard">
@@ -1438,7 +1438,6 @@
                         <button class="tab-btn" data-pane="pane-layers">L1 / L2 / L3</button>
                         <button class="tab-btn" data-pane="pane-perturbation">Perturbation</button>
                         <button class="tab-btn" data-pane="pane-radar">Radar</button>
-                        <button class="tab-btn" data-pane="pane-tradeoff">Trade-off</button>
                     </div>
                 </div>
 
@@ -1457,10 +1456,6 @@
 
                     <div id="pane-radar" class="chart-pane">
                         <canvas id="chartRadar" height="340"></canvas>
-                    </div>
-
-                    <div id="pane-tradeoff" class="chart-pane">
-                        <canvas id="chartTradeoff" height="320"></canvas>
                     </div>
                 </div>
 
@@ -1768,40 +1763,6 @@ new Chart(ctxRadar, {
                 angleLines: { color: 'rgba(15,23,42,0.08)' },
                 pointLabels: { font: { size: 11, weight: 600 } },
             },
-        },
-    },
-});
-
-/* ---------- Chart 5: Trade-off (TCR vs safety adherence avg) ---------- */
-const ctxTradeoff = document.getElementById('chartTradeoff').getContext('2d');
-new Chart(ctxTradeoff, {
-    type: 'scatter',
-    data: {
-        datasets: MODELS.map(m => ({
-            label: m.name,
-            data: [{ x: m.TCR, y: m.L1_avg, model: m.name }],
-            backgroundColor: m.color,
-            borderColor: m.color,
-            pointRadius: 9,
-            pointHoverRadius: 13,
-            pointStyle: m.group === "OpenClaw" ? "circle" : (m.group === "Claude Code" ? "triangle" : "rect"),
-        })),
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { position: 'right', labels: { font: { size: 10 }, boxWidth: 12 } },
-            tooltip: {
-                callbacks: {
-                    label: (c) => `${c.raw.model}: TCR=${c.parsed.x.toFixed(2)}, SAR=${c.parsed.y.toFixed(2)}`,
-                },
-            },
-            title: { display: true, text: 'TCR ↑  vs  Boundary Compliance (Avg) ↑   — top-right is best' },
-        },
-        scales: {
-            x: { title: { display: true, text: 'Task Completion (TCR)' }, min: 0.3, max: 0.8 },
-            y: { title: { display: true, text: 'L1 Boundary Compliance (Avg)' }, min: 0.2, max: 0.75 },
         },
     },
 });
