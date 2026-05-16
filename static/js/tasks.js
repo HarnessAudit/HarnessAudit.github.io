@@ -283,9 +283,27 @@ function openTaskModal(id) {
         </div>
         <div class="field">
             <h4>Input Assets</h4>
-            ${(task.input_assets || []).length ? `<ul class="modal-list">${task.input_assets.map(asset => `
-                <li><strong>${escapeHtml(asset.asset_type || "asset")}</strong>: ${escapeHtml(asset.path || "")} ${asset.description ? `— ${escapeHtml(asset.description)}` : ""}</li>
-            `).join("")}</ul>` : `<p class="modal-note">No declared multimodal input assets.</p>`}
+            ${(task.input_assets || []).length ? `<div class="asset-grid">${task.input_assets.map(asset => {
+                const desc = asset.description ? escapeHtml(asset.description) : "";
+                const pathLabel = escapeHtml(asset.path || "");
+                if (asset.web_path && asset.asset_type === "image") {
+                    return `
+                    <figure class="asset-thumb" tabindex="0"
+                        data-src="${escapeHtml(asset.web_path)}"
+                        data-alt="${desc || pathLabel}">
+                        <img loading="lazy" src="${escapeHtml(asset.web_path)}" alt="${desc || pathLabel}">
+                        <figcaption>
+                            <span class="asset-path">${pathLabel}</span>
+                            ${desc ? `<span class="asset-desc">${desc}</span>` : ""}
+                        </figcaption>
+                    </figure>`;
+                }
+                return `<div class="asset-thumb asset-thumb--text">
+                    <strong>${escapeHtml(asset.asset_type || "asset")}</strong>
+                    <span class="asset-path">${pathLabel}</span>
+                    ${desc ? `<span class="asset-desc">${desc}</span>` : ""}
+                </div>`;
+            }).join("")}</div>` : `<p class="modal-note">No declared multimodal input assets.</p>`}
         </div>
         <div class="field">
             <h4>Metadata</h4>
@@ -332,6 +350,56 @@ document.addEventListener("DOMContentLoaded", () => {
     const modal = document.getElementById("taskModal");
     if (modal) modal.addEventListener("click", e => { if (e.target === modal) closeTaskModal(); });
     document.addEventListener("keydown", e => {
-        if (e.key === "Escape" && modal && modal.classList.contains("open")) closeTaskModal();
+        if (e.key === "Escape") {
+            const lb = document.getElementById("assetLightbox");
+            if (lb && lb.classList.contains("open")) { closeAssetLightbox(); return; }
+            if (modal && modal.classList.contains("open")) closeTaskModal();
+        }
     });
+
+    /* ---- Asset lightbox: delegate clicks from any .asset-thumb with data-src ---- */
+    document.body.addEventListener("click", e => {
+        const thumb = e.target.closest(".asset-thumb[data-src]");
+        if (thumb) {
+            e.preventDefault();
+            openAssetLightbox(thumb.dataset.src, thumb.dataset.alt || "");
+        }
+    });
+    document.body.addEventListener("keydown", e => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const thumb = e.target.closest(".asset-thumb[data-src]");
+        if (thumb) {
+            e.preventDefault();
+            openAssetLightbox(thumb.dataset.src, thumb.dataset.alt || "");
+        }
+    });
+    const lb = document.getElementById("assetLightbox");
+    if (lb) {
+        lb.addEventListener("click", e => {
+            if (e.target === lb || e.target.classList.contains("lb-close")) closeAssetLightbox();
+        });
+    }
 });
+
+function openAssetLightbox(src, alt) {
+    const lb = document.getElementById("assetLightbox");
+    if (!lb) return;
+    const img = lb.querySelector(".lb-img");
+    const cap = lb.querySelector(".lb-caption");
+    img.src = src;
+    img.alt = alt;
+    if (cap) cap.textContent = alt;
+    lb.classList.add("open");
+    document.body.style.overflow = "hidden";
+}
+
+function closeAssetLightbox() {
+    const lb = document.getElementById("assetLightbox");
+    if (!lb) return;
+    lb.classList.remove("open");
+    const img = lb.querySelector(".lb-img");
+    if (img) img.src = "";
+    // Keep task modal open if it was open; only restore overflow if no other modal is open
+    const taskOpen = document.getElementById("taskModal")?.classList.contains("open");
+    if (!taskOpen) document.body.style.overflow = "";
+}
