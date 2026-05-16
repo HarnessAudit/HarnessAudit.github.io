@@ -970,55 +970,6 @@
             .chart-row.two { grid-template-columns: 1fr 1fr; }
         }
 
-        /* ---------- Leaderboard table ---------- */
-        .table-wrap {
-            overflow-x: auto;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            background: #fff;
-        }
-        table.leaderboard {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-        }
-        table.leaderboard th,
-        table.leaderboard td {
-            padding: 10px 12px;
-            text-align: center;
-            white-space: nowrap;
-            border-bottom: 1px solid var(--border);
-        }
-        table.leaderboard th {
-            position: sticky;
-            top: 0;
-            background: #f8fafc;
-            font-weight: 600;
-            color: var(--text);
-            font-size: 0.82rem;
-            letter-spacing: 0.02em;
-        }
-        table.leaderboard th.group {
-            background: #eef2ff;
-            border-bottom: 1px solid var(--border);
-            color: var(--accent);
-        }
-        table.leaderboard tr.group-row td {
-            text-align: left;
-            font-weight: 700;
-            background: linear-gradient(90deg, var(--accent-soft), transparent);
-            color: var(--accent);
-            font-size: 0.84rem;
-            letter-spacing: 0.04em;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 8px 12px;
-        }
-        table.leaderboard tr.group-claude td { background: linear-gradient(90deg, rgba(124, 58, 237, 0.12), transparent); color: var(--purple); }
-        table.leaderboard tr.group-codex td { background: linear-gradient(90deg, rgba(217, 119, 6, 0.12), transparent); color: var(--warning); }
-        table.leaderboard td.model { text-align: left; font-weight: 500; }
-        table.leaderboard tr:hover td:not(.group-row) { background: var(--bg-soft); }
-        table.leaderboard td.best { color: var(--accent); font-weight: 700; }
-        table.leaderboard td.worst { color: var(--danger); }
         .legend {
             display: flex;
             gap: 14px;
